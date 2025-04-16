@@ -966,7 +966,7 @@ public:
 		tjs_int numparams, tTJSVariant **param, iTJSDispatch2 *objthis) {
 		if (numparams < 1) return TJS_E_BADPARAMCOUNT;
 		if (result) {
-			IStringWriter writer(numparams > 1 ? (tjs_int)*param[1] : 0);
+			IStringWriter writer(numparams > 1 ? (tjs_int)(*param[1]) : (tjs_int)(0));
 			getVariantString(*param[0], &writer);
 			*result = writer.buf;
 		}
