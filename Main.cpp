@@ -45,7 +45,7 @@ static bool TVPUtf16ToUtf8( std::string& out, const tjs_string& in ) {
 
 class IFileStorage  {
 
-	IStream *in;
+	iTJSBinaryStream *in;
 	char buf[8192];
 	ULONG pos;
 	ULONG len;
@@ -54,7 +54,7 @@ class IFileStorage  {
 	
 public:
 	IFileStorage(tTJSVariantString *filename, bool utf8) : utf8(utf8) {
-		in = TVPCreateIStream(filename, TJS_BS_READ);
+		in = TVPCreateBinaryStreamForRead(filename, "");
 		if(!in) {
 			TVPThrowExceptionMessage((ttstr(TJS_W("cannot open : ")) + *filename).c_str());
 		}
@@ -65,7 +65,7 @@ public:
 
 	~IFileStorage() {
 		if (in) {
-			in->Release();
+			in->Destruct();
 			in = NULL;
 		}
 	}
@@ -78,7 +78,7 @@ public:
 				return EOF;
 			} else {
 				pos = 0;
-				if (in->Read(buf, sizeof buf, &len) == S_OK && len > 0) {
+				if ((len = in->Read(buf, sizeof buf)) > 0) {
 					eofFlag = len < sizeof buf;
 				} else {
 					eofFlag = true;
