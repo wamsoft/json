@@ -17,14 +17,28 @@ if(NOT TARGET tp_stub)
 add_subdirectory(../tp_stub ${CMAKE_CURRENT_BINARY_DIR}/tp_stub)
 endif()
 
-add_library(${PROJECT_NAME} SHARED
+if(TVP_STATIC_PLUGIN)
+    set(TVP_LIBRARY_TYPE STATIC)
+else()
+    set(TVP_LIBRARY_TYPE SHARED)
+endif()
+
+add_library(${PROJECT_NAME} ${TVP_LIBRARY_TYPE}
 	Main.cpp
+)
+
+if (TVP_STATIC_PLUGIN)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    TVP_STATIC_PLUGIN
+    TVP_PLUGIN_NAME=${PROJECT_NAME}
+)
+endif()
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    tp_stub
 )
 
 # target_include_directories(${PROJECT_NAME} PUBLIC
 # 	../../../core/base
 # )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC
-    tp_stub
-)
