@@ -97,8 +97,7 @@ class IFileWriter : public IWriter {
 	/// 出力ストリーム
 	iTJSBinaryStream *stream;
 	bool utf;
-	char *dat;
-	int datlen;
+	std::vector<char> dat;
 	
 public:
 
@@ -108,8 +107,6 @@ public:
 	IFileWriter(const tjs_char *filename, bool utf=false, int newlinetype=0) : IWriter(newlinetype) {
 		stream = TVPCreateBinaryStreamForWrite(filename, "");
 		this->utf = utf;
-		dat = NULL;
-		datlen = 0;
 	}
 
 	/**
@@ -123,36 +120,27 @@ public:
 			//stream->Commit(STGC_DEFAULT);
 			stream->Destruct();
 		}
-		if (dat) {
-			free(dat);
-		}
 	}
 	
 	void output() {
-		if (stream) {
+		if (stream && buf.length() > 0) {
 			ULONG s;
 			if (utf) {
-				// UTF-8 で出力
-				int maxlen = buf.length() * 6 + 1;
-				if (maxlen > datlen) {
-					datlen = maxlen;
-					dat = (char*)realloc(dat, datlen);
+				// UTF-8で出力
+				int len = TVPWideCharToUtf8String(buf.c_str(), NULL);
+				if (len+1 > dat.size()) {
+					dat.resize(len+1);
 				}
-				if (dat != NULL) {
-					int len = TVPWideCharToUtf8String(buf.c_str(), dat);
-					s = stream->Write(dat, len);
-				}
+				len = TVPWideCharToUtf8String(buf.c_str(), &dat[0]);
+				s = stream->Write(&dat[0], len);
 			} else {
 				// 現在のコードページで出力
-				int len = buf.GetNarrowStrLen() + 1;
-				if (len > datlen) {
-					datlen = len;
-					dat = (char*)realloc(dat, datlen);
+				int len = buf.GetNarrowStrLen();
+				if (len+1 > dat.size()) {
+					dat.resize(len+1);
 				}
-				if (dat != NULL) {
-					buf.ToNarrowStr(dat, len-1);
-					s = stream->Write(dat, len-1);
-				}
+				buf.ToNarrowStr(&dat[0], len);
+				s = stream->Write(&dat[0], len);
 			}
 		}
 		buf.Clear();
